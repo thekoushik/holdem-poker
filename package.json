@@ -1,7 +1,7 @@
 {
   "name": "holdem-poker",
   "version": "0.0.1",
-  "description": "Holdem Poker Game Library",
+  "description": "Javascript Holdem Poker Engine",
   "main": "index.js",
   "scripts": {
     "build": "browserify ./src/index.ts -p [ tsify --noImplicitAny ] --standalone Poker > index.js",
@@ -19,6 +19,10 @@
     "holdem",
     "poker"
   ],
+  "repository": {
+    "url": "https://github.com/thekoushik/holdem-poker.git",
+    "type": "git"
+  },
   "author": "Koushik Seal",
   "license": "MIT",
   "devDependencies": {
