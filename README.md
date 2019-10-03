@@ -1,2 +1,2 @@
 # holdem-poker
-Holdem Poker Engine
+Javascript Holdem Poker Engine

@@ -1,0 +1,36 @@
+{
+  "name": "holdem-poker",
+  "version": "0.0.1",
+  "description": "Holdem Poker Game Library",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify ./src/index.ts -p [ tsify --noImplicitAny ] --standalone Poker > index.js",
+    "dbuild": "tsc -p ./tsconfig.d.json",
+    "both": "npm run build && npm run dbuild",
+    "test": "jest",
+    "prepare": "npm run both"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "index.js",
+    "dist"
+  ],
+  "keywords": [
+    "holdem",
+    "poker"
+  ],
+  "author": "Koushik Seal",
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "^16.5.0",
+    "jest": "^24.9.0",
+    "tsify": "^4.0.1",
+    "typescript": "^3.5.3"
+  },
+  "jest": {
+    "testMatch": [
+      "**/test/**/*.[jt]s?(x)",
+      "**/?(*.)+(spec|test).[jt]s?(x)"
+    ]
+  }
+}
