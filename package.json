@@ -1,6 +1,6 @@
 {
   "name": "holdem-poker",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Javascript Holdem Poker Engine",
   "main": "index.js",
   "scripts": {

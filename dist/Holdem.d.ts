@@ -4,6 +4,22 @@ export interface HandValue {
     name: string;
     value: number;
 }
+/**
+ * Result of compareHands
+ *
+ * @property type   win or draw
+ * @property index  winner index(if win)
+ * @property name   winning hand
+ * @property suit   suit name if won with hicard
+ * @property value  card value if won with hicard
+ */
+export interface Result {
+    type: 'win' | 'draw';
+    index?: number;
+    name?: string;
+    suit?: string;
+    value?: number;
+}
 interface TestCache {
     hicard: {
         suit: string;
@@ -47,7 +63,7 @@ export declare class Holdem {
     private TestFourOfAKind;
     private TestStraightFlush;
     private TestRoyalFlush;
-    computeHand(hand: Array<Card>): HandValue;
-    compareHands(hands: Array<Array<Card>>, community: Array<Card>): any;
+    computeHand(allcards: Array<Card>, mainCards: Array<Card>): HandValue;
+    compareHands(hands: Array<Array<Card>>, community: Array<Card>): Result;
 }
 export {};

@@ -14,8 +14,8 @@ Royal flush
 describe('Compare hands pair test 0',()=>{
     var comp;
     beforeAll(()=>{
-        var game = new Poker.Game();
-        comp=game.compareHands([
+        var game = new Poker.Game([0,0]);
+        comp=game.__instance.compareHands([
             [
             new Poker.Card(Poker.Suits.CLUB,2),
             new Poker.Card(Poker.Suits.HEART,4)
@@ -42,8 +42,8 @@ describe('Compare hands pair test 0',()=>{
 describe('Compare hand hi card 1',()=>{
     var comp;
     beforeAll(()=>{
-        var game = new Poker.Game();
-        comp=game.compareHands([
+        var game = new Poker.Game([0,0]);
+        comp=game.__instance.compareHands([
             [
             new Poker.Card(Poker.Suits.CLUB,2),
             new Poker.Card(Poker.Suits.HEART,4),
@@ -67,8 +67,8 @@ describe('Compare hand hi card 1',()=>{
 describe('Compare hand hi card 2',()=>{
     var comp;
     beforeAll(()=>{
-        var game = new Poker.Game();
-        comp=game.compareHands([
+        var game = new Poker.Game([0,0]);
+        comp=game.__instance.compareHands([
             [
             new Poker.Card(Poker.Suits.CLUB,2),
             new Poker.Card(Poker.Suits.CLUB,10),
@@ -98,8 +98,8 @@ describe('Compare hand hi card 2',()=>{
 describe('Compare hand pair test 1',()=>{
   var comp;
   beforeAll(()=>{
-      var game = new Poker.Game();
-      comp=game.compareHands([
+      var game = new Poker.Game([0,0]);
+      comp=game.__instance.compareHands([
           [
             new Poker.Card(Poker.Suits.DIAMOND,2),
             new Poker.Card(Poker.Suits.SPADE,2),
@@ -126,8 +126,8 @@ describe('Compare hand pair test 1',()=>{
 describe('Compare hand pair test2',()=>{
   var comp;
   beforeAll(()=>{
-      var game = new Poker.Game();
-      comp=game.compareHands([
+      var game = new Poker.Game([0,0]);
+      comp=game.__instance.compareHands([
           [
             new Poker.Card(Poker.Suits.DIAMOND,4),
             new Poker.Card(Poker.Suits.SPADE,5),
@@ -157,8 +157,8 @@ describe('Compare hand pair test2',()=>{
 describe('Compare hand Two pair test',()=>{
   var comp;
   beforeAll(()=>{
-      var game = new Poker.Game();
-      comp=game.compareHands([
+      var game = new Poker.Game([0,0]);
+      comp=game.__instance.compareHands([
           [
             new Poker.Card(Poker.Suits.DIAMOND,2),
             new Poker.Card(Poker.Suits.SPADE,2),

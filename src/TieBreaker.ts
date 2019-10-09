@@ -1,6 +1,6 @@
-import { Rank } from "./Holdem";
+import { Rank, Result } from "./Holdem";
 
-const BreakTieUsingHiCard=(ranks:Array<Rank>)=>{
+const BreakTieUsingHiCard=(ranks:Array<Rank>):Result=>{
     let max_card_index=-1;
     let max_card_value=0;
     let max_card_map:any={};
@@ -34,7 +34,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * If Two Or More Players Hold A Single Pair Then Highest Pair Wins. If The Pairs Are Of The Same Value,
      * The Highest Kicker Card Determines The Winner. A Second And Even Third Kicker Can Be Used If Necessary
      */
-    "Pair":(ranks:Array<Rank>)=>{
+    "Pair":(ranks:Array<Rank>):Result=>{
         let max_pair_index=-1;
         let max_pair_val=0;
         let max_pair_counter:any={};
@@ -68,7 +68,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * Then The Highest Of The Second Pair Determines The Winner. If Both Players Hold Identical Two Pairs,
      * The Fifth Card Is Used To Break The Tie.
      */
-    "Two pairs":(ranks:Array<Rank>)=>{
+    "Two pairs":(ranks:Array<Rank>):Result=>{
         for(let check_highest=0;check_highest<2;check_highest++){
             let max_pair_index=-1;
             let max_pair_val=0;
@@ -123,7 +123,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * The Three Of A Kind Determines The Winner. If Two Or More Players Have The Same Three Of A Kind,
      * Then A Fourth Card (And A Fifth If Necessary) Can Be Used As Kickers To Determine The Winner.
      */
-    "Three of a kind":(ranks:Array<Rank>)=>{
+    "Three of a kind":(ranks:Array<Rank>):Result=>{
         let max_pair_index=-1;
         let max_pair_val=0;
         let max_pair_counter:any={};
@@ -173,7 +173,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * Game That Are Used By Two Or More Players To Make A Full House, Then We Would Look At The
      * Strength Of The Pair To Determine A Winner.
      */
-    "Full House":(ranks:Array<Rank>)=>{
+    "Full House":(ranks:Array<Rank>):Result=>{
         for(let check_3k=0;check_3k<2;check_3k++){
             let max_3k_index=-1;
             let max_3k_val=-1;
@@ -203,7 +203,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * Players. A Kicker Can Be Used, However, If The Fifth Community Card Is Higher Than Any Card
      * Held By Any Player Still In The Hand, Then The Hand Is Considered A Tie And The Pot Is Split.
      */
-    "Four of a kind":(ranks:Array<Rank>)=>{
+    "Four of a kind":(ranks:Array<Rank>):Result=>{
         for(let check_4k=0;check_4k<2;check_4k++){
             let max_4k_index=-1;
             let max_4k_val=0;
@@ -246,7 +246,7 @@ export const TieBreaker:{ [key:string]:Function }={
      * Between Two Royal Flushes, There Can Be No Tie Breaker. If Two Players Have Royal Flushes,
      * They Split The Pot.
      */
-    "Royal flush":(ranks:Array<Rank>)=>{
+    "Royal flush":(ranks:Array<Rank>):Result=>{
         return {type:'draw'};
     }
 }

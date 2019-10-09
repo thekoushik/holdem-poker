@@ -66,16 +66,177 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var deck_1 = require("./deck");
 var Holdem_1 = require("./Holdem");
 var Game = /** @class */ (function () {
-    function Game() {
+    /**
+     * Inititalizes the Game
+     *
+     * @param playerMoney   Number of players will be the same length as
+     * @param initialBet    Minimum amount to start with
+     */
+    function Game(playerMoney, initialBet) {
+        this.pot = 0;
+        this.players = [];
+        this.deck = new deck_1.Deck();
+        this.table = [];
+        this.round = [];
+        this.__instance = new Holdem_1.Holdem();
+        this.initialBet = initialBet;
+        this.newRound(playerMoney);
+    }
+    /**
+     * Starts a new game round
+     *
+     * @param playerMoney Money for individual players
+     */
+    Game.prototype.newRound = function (playerMoney) {
+        var _this = this;
+        this.pot = 0;
         this.deck = new deck_1.Deck();
         this.deck.shuffle();
-        this.__instance = new Holdem_1.Holdem();
-    }
-    Game.prototype.computeHand = function (hand) {
-        return this.__instance.computeHand(hand);
+        this.table = [];
+        this.round = [];
+        this.players = playerMoney.map(function (money) {
+            return {
+                money: money,
+                hand: _this.deck.getCards(2),
+                folded: false,
+                active: true
+            };
+        });
     };
-    Game.prototype.compareHands = function (hands, community) {
-        return this.__instance.compareHands(hands, community);
+    /**
+     * Returns the array of player
+     */
+    Game.prototype.getPlayers = function () {
+        return this.players.slice(0);
+    };
+    /**
+     * Returns the current round. This Array represents each players' current investment and decision
+     */
+    Game.prototype.getRound = function () {
+        return this.round.slice(0);
+    };
+    /**
+     * Returns the current pot amount
+     */
+    Game.prototype.getPot = function () {
+        return this.pot;
+    };
+    /**
+     * Returns the current community cards
+     */
+    Game.prototype.getTable = function () {
+        return this.table;
+    };
+    /**
+     * Starts the round if not started yet
+     */
+    Game.prototype.startRound = function () {
+        var activePlayers = 0;
+        for (var i = 0; i < this.players.length; i++) {
+            if (this.players[i].money < 0)
+                this.players[i].active = false;
+            else {
+                activePlayers++;
+            }
+            this.round[i] = {
+                money: this.players[i].active ? this.initialBet : 0
+            };
+        }
+        if (activePlayers == 1) {
+            this.round = [];
+            throw new Error("Game cannot continue");
+        }
+    };
+    /**
+     * Raise by a player
+     *
+     * @param index Player index
+     * @param money Raise amount
+     */
+    Game.prototype.raise = function (index, money) {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.players[index].money < money)
+            throw new Error('Too much');
+        if (this.round[index].decision)
+            throw new Error("Please proceed to next round");
+        this.round[index].money = money;
+        this.round[index].decision = "raise";
+    };
+    /**
+     * Call by a player
+     *
+     * @param index Player index
+     */
+    Game.prototype.call = function (index) {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.round[index].decision)
+            throw new Error("Please proceed to next round");
+        this.round[index].decision = "call";
+    };
+    /**
+     * Fold by a player
+     *
+     * @param index Player index
+     */
+    Game.prototype.fold = function (index) {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.round[index].decision)
+            throw new Error("Please proceed to next round");
+        this.round[index].decision = "fold";
+        this.players[index].folded = true;
+    };
+    /**
+     * Ends the current round.
+     */
+    Game.prototype.endRound = function () {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.table.length >= 3)
+            throw new Error("Round is over, please invoke checkResult");
+        for (var i = 0; i < this.round.length; i++) {
+            this.pot += this.round[i].money;
+            this.round[i] = {
+                money: 0
+            };
+        }
+        this.table.push(this.deck.getCards(1)[0]);
+    };
+    /**
+     * Returns the result of the current round
+     */
+    Game.prototype.checkResult = function () {
+        var result = this.__instance.compareHands(this.players.map(function (m) { return m.hand; }), this.table);
+        if (result.type == 'win') {
+            if (result.index != undefined)
+                this.players[result.index].money += this.pot;
+            else
+                throw new Error("This error will never happen");
+        }
+        else { //draw
+            //split the pot among non-folded players
+            var splitCount = this.players.filter(function (f) { return !f.folded; }).length;
+            if (splitCount > 0) {
+                var eachSplit = this.pot / splitCount;
+                for (var i = 0; i < this.players.length; i++) {
+                    if (!this.players[i].folded)
+                        this.players[i].money += eachSplit;
+                }
+            }
+        }
+        this.newRound(this.players.map(function (m) { return m.money; }));
+        return result;
+    };
+    /**
+     * Returns the max possible hand value.
+     * Note: Community cards are ignored.
+     *
+     * @param hand Array of cards
+     */
+    Game.prototype.computeHand = function (hand) {
+        return this.__instance.computeHand(hand, hand);
     };
     return Game;
 }());
@@ -151,13 +312,13 @@ var Holdem = /** @class */ (function () {
         ];
     }
     //Simple value of the card. Lowest: 2 - Highest: Ace(14)
-    Holdem.prototype.TestHicard = function (hand) {
-        var card = hand.slice(0).sort(exports.DESC)[0];
+    Holdem.prototype.TestHicard = function (hand, mainCards) {
+        var card = mainCards.slice(0).sort(exports.DESC)[0];
         this.test_cache.hicard = { suit: card.suit + '', value: card.value };
         return card.value;
     };
     //Two cards with the same value
-    Holdem.prototype.TestPair = function (hand) {
+    Holdem.prototype.TestPair = function (hand, mainCards) {
         for (var key in this.test_summary.value)
             if (this.test_summary.value[key].length == 2) {
                 this.test_cache.pair = { value: Number(key), index: this.test_summary.value[key][0] };
@@ -166,7 +327,7 @@ var Holdem = /** @class */ (function () {
         return false;
     };
     //Two times two cards with the same value
-    Holdem.prototype.TestTwoPairs = function (hand) {
+    Holdem.prototype.TestTwoPairs = function (hand, mainCards) {
         var all_indices = [];
         var pair_indices = [];
         for (var key in this.test_summary.value) {
@@ -183,7 +344,7 @@ var Holdem = /** @class */ (function () {
         }
     };
     //Three cards with the same value
-    Holdem.prototype.TestThreeOfAKind = function (hand) {
+    Holdem.prototype.TestThreeOfAKind = function (hand, mainCards) {
         for (var key in this.test_summary.value) {
             if (this.test_summary.value[key].length == 3) {
                 this.test_cache.three_of_a_kind.value = Number(key);
@@ -193,7 +354,7 @@ var Holdem = /** @class */ (function () {
         }
     };
     //Sequence of 5 cards in increasing value (Ace can precede 2 and follow up King)
-    Holdem.prototype.TestStraight = function (hand) {
+    Holdem.prototype.TestStraight = function (hand, mainCards) {
         var seq_count = 0;
         var seq_start = -1;
         var seq = hand.slice(0).sort(ASC);
@@ -216,7 +377,7 @@ var Holdem = /** @class */ (function () {
         return result;
     };
     //5 cards of the same suit
-    Holdem.prototype.TestFlush = function (hand) {
+    Holdem.prototype.TestFlush = function (hand, mainCards) {
         for (var key in this.test_summary.suit) {
             if (this.test_summary.suit[key].length == 5) {
                 this.test_cache.flush = { suit: key, result: true };
@@ -228,13 +389,13 @@ var Holdem = /** @class */ (function () {
         };
     };
     //Combination of three of a kind and a pair
-    Holdem.prototype.TestFullHouse = function (hand) {
+    Holdem.prototype.TestFullHouse = function (hand, mainCards) {
         if (this.test_cache.three_of_a_kind.indices.length == 3 && this.test_cache.pair.value >= 2) {
             return this.test_cache.three_of_a_kind.value !== this.test_cache.pair.value;
         }
     };
     //Four cards of the same value
-    Holdem.prototype.TestFourOfAKind = function (hand) {
+    Holdem.prototype.TestFourOfAKind = function (hand, mainCards) {
         for (var key in this.test_summary.value) {
             if (this.test_summary.value[key].length == 4) {
                 this.test_cache.four_of_a_kind = Number(key);
@@ -243,7 +404,7 @@ var Holdem = /** @class */ (function () {
         }
     };
     //Straight of the same suit
-    Holdem.prototype.TestStraightFlush = function (hand) {
+    Holdem.prototype.TestStraightFlush = function (hand, mainCards) {
         if (this.test_cache.straight.result && this.test_cache.flush.result) {
             if (hand[this.test_cache.straight.start].suit == this.test_cache.flush.suit) {
                 this.test_cache.straight_flush = true;
@@ -252,10 +413,10 @@ var Holdem = /** @class */ (function () {
         }
     };
     //Straight flush from Ten to Ace
-    Holdem.prototype.TestRoyalFlush = function (hand) {
+    Holdem.prototype.TestRoyalFlush = function (hand, mainCards) {
         return this.test_cache.straight_flush && hand[this.test_cache.straight.start].value == 10;
     };
-    Holdem.prototype.computeHand = function (hand) {
+    Holdem.prototype.computeHand = function (allcards, mainCards) {
         var _this = this;
         this.test_cache = {
             hicard: { suit: '', value: 0 },
@@ -277,9 +438,9 @@ var Holdem = /** @class */ (function () {
             value: {},
             suit: {}
         };
-        for (var i = 0; i < hand.length; i++) {
-            var suit = hand[i].suit + '';
-            var value = hand[i].value;
+        for (var i = 0; i < allcards.length; i++) {
+            var suit = allcards[i].suit + '';
+            var value = allcards[i].value;
             if (!this.test_summary.suit[suit])
                 this.test_summary.suit[suit] = [i];
             else
@@ -289,7 +450,7 @@ var Holdem = /** @class */ (function () {
             else
                 this.test_summary.value[value].push(i);
         }
-        var result = this.TestSeries.map(function (t, i) { return i == 0 ? t.fn.call(_this, hand) : (t.fn.call(_this, hand) ? (i + 14) : 0); }).sort(VASC).pop();
+        var result = this.TestSeries.map(function (t, i) { return i == 0 ? t.fn.call(_this, allcards, mainCards) : (t.fn.call(_this, allcards, mainCards) ? (i + 14) : 0); }).sort(VASC).pop();
         return {
             name: this.TestSeries[Math.max(result - 14, 0)].name,
             value: result
@@ -299,7 +460,7 @@ var Holdem = /** @class */ (function () {
         var _this = this;
         var ranks = hands.map(function (f, index) {
             var hand = f.concat(community);
-            return __assign({}, _this.computeHand(hand), { index: index, cache: _this.test_cache, hand: hand });
+            return __assign({}, _this.computeHand(hand, f), { index: index, cache: _this.test_cache, hand: hand });
         }).sort(exports.DESC);
         if (ranks[0].value > ranks[1].value) {
             var result = { type: "win", index: ranks[0].index, name: ranks[0].name };

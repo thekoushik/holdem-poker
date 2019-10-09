@@ -20,6 +20,22 @@ export interface HandValue{
     name:string;
     value:number;
 }
+/**
+ * Result of compareHands
+ * 
+ * @property type   win or draw
+ * @property index  winner index(if win)
+ * @property name   winning hand
+ * @property suit   suit name if won with hicard
+ * @property value  card value if won with hicard
+ */
+export interface Result{
+    type:'win'|'draw';
+    index?: number;
+    name?:string;
+    suit?:string;
+    value?:number;
+}
 interface TestCache{
     hicard:{
         suit:string,
@@ -97,13 +113,13 @@ export class Holdem{
         {name:HAND_ROYALFLUSH,fn:this.TestRoyalFlush}
     ];
     //Simple value of the card. Lowest: 2 - Highest: Ace(14)
-    private TestHicard(hand:Array<Card>){
-        let card=hand.slice(0).sort(DESC)[0];
+    private TestHicard(hand:Array<Card>,mainCards:Array<Card>){
+        let card=mainCards.slice(0).sort(DESC)[0];
         this.test_cache.hicard={suit: card.suit+'', value: card.value};
         return card.value;
     }
     //Two cards with the same value
-    private TestPair(hand:Array<Card>){
+    private TestPair(hand:Array<Card>,mainCards:Array<Card>){
         for(let key in this.test_summary.value)
             if(this.test_summary.value[key].length==2){
                 this.test_cache.pair={value:Number(key),index:this.test_summary.value[key][0]};
@@ -112,7 +128,7 @@ export class Holdem{
         return false;
     }
     //Two times two cards with the same value
-    private TestTwoPairs(hand:Array<Card>){
+    private TestTwoPairs(hand:Array<Card>,mainCards:Array<Card>){
         let all_indices:number[]=[];
         let pair_indices:number[]=[];
         for(let key in this.test_summary.value){
@@ -129,7 +145,7 @@ export class Holdem{
         }
     }
     //Three cards with the same value
-    private TestThreeOfAKind(hand:Array<Card>){
+    private TestThreeOfAKind(hand:Array<Card>,mainCards:Array<Card>){
         for(let key in this.test_summary.value){
             if(this.test_summary.value[key].length==3){
                 this.test_cache.three_of_a_kind.value=Number(key);
@@ -139,7 +155,7 @@ export class Holdem{
         }
     }
     //Sequence of 5 cards in increasing value (Ace can precede 2 and follow up King)
-    private TestStraight(hand:Array<Card>){
+    private TestStraight(hand:Array<Card>,mainCards:Array<Card>){
         let seq_count=0;
         let seq_start=-1;
         let seq=hand.slice(0).sort(ASC);
@@ -160,7 +176,7 @@ export class Holdem{
         return result;
     }
     //5 cards of the same suit
-    private TestFlush(hand:Array<Card>){
+    private TestFlush(hand:Array<Card>,mainCards:Array<Card>){
         for(let key in this.test_summary.suit){
             if(this.test_summary.suit[key].length==5){
                 this.test_cache.flush={suit:key,result:true};
@@ -172,13 +188,13 @@ export class Holdem{
         };
     }
     //Combination of three of a kind and a pair
-    private TestFullHouse(hand:Array<Card>){
+    private TestFullHouse(hand:Array<Card>,mainCards:Array<Card>){
         if(this.test_cache.three_of_a_kind.indices.length==3 && this.test_cache.pair.value>=2){
             return this.test_cache.three_of_a_kind.value!==this.test_cache.pair.value;
         }
     }
     //Four cards of the same value
-    private TestFourOfAKind(hand:Array<Card>){
+    private TestFourOfAKind(hand:Array<Card>,mainCards:Array<Card>){
         for(let key in this.test_summary.value){
             if(this.test_summary.value[key].length==4){
                 this.test_cache.four_of_a_kind=Number(key);
@@ -187,7 +203,7 @@ export class Holdem{
         }
     }
     //Straight of the same suit
-    private TestStraightFlush(hand:Array<Card>){
+    private TestStraightFlush(hand:Array<Card>,mainCards:Array<Card>){
         if(this.test_cache.straight.result && this.test_cache.flush.result){
             if(hand[this.test_cache.straight.start].suit==this.test_cache.flush.suit){
                 this.test_cache.straight_flush=true;
@@ -196,10 +212,10 @@ export class Holdem{
         }
     }
     //Straight flush from Ten to Ace
-    private TestRoyalFlush(hand:Array<Card>){
+    private TestRoyalFlush(hand:Array<Card>,mainCards:Array<Card>){
         return this.test_cache.straight_flush && hand[this.test_cache.straight.start].value==10;
     }
-    computeHand(hand:Array<Card>):HandValue{
+    computeHand(allcards:Array<Card>,mainCards:Array<Card>):HandValue{
         this.test_cache={
             hicard:{suit:'',value:0},
             pair:{value:0,index:-1},
@@ -220,9 +236,9 @@ export class Holdem{
             value:{},
             suit:{}
         }
-        for(let i=0;i<hand.length;i++){
-            let suit=hand[i].suit+'';
-            let value=hand[i].value;
+        for(let i=0;i<allcards.length;i++){
+            let suit=allcards[i].suit+'';
+            let value=allcards[i].value;
             if(!this.test_summary.suit[suit])
                 this.test_summary.suit[suit]=[i];
             else
@@ -232,20 +248,20 @@ export class Holdem{
             else
                 this.test_summary.value[value].push(i);
         }
-        let result=this.TestSeries.map((t,i)=>i==0?t.fn.call(this,hand):(t.fn.call(this,hand)?(i+14):0)).sort(VASC).pop();
+        let result=this.TestSeries.map((t,i)=>i==0?t.fn.call(this,allcards,mainCards):(t.fn.call(this,allcards,mainCards)?(i+14):0)).sort(VASC).pop();
 		return {
             name: this.TestSeries[Math.max(result-14,0)].name,
             value: result
         };
     }
-    compareHands(hands:Array<Array<Card>>,community:Array<Card>){
+    compareHands(hands:Array<Array<Card>>,community:Array<Card>):Result{
 		let ranks:Array<Rank>=hands.map((f,index)=>{
             let hand=f.concat(community);
 			return {
-				...this.computeHand(hand),
+				...this.computeHand(hand,f),
 				index,
                 cache:this.test_cache,
-                hand:hand
+                hand
 			};
 		}).sort(DESC);
 		if(ranks[0].value>ranks[1].value){

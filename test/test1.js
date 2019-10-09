@@ -13,7 +13,7 @@ describe('Invalid test',()=>{
 describe('Basic wins',()=>{
     var game;
     beforeAll(()=>{
-        game = new Poker.Game();
+        game = new Poker.Game([0,0]);
     });
     it('should be hicard',()=>{
         expect(

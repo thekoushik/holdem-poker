@@ -1,8 +1,8 @@
-import { Game } from './Game';
+import { Game, Player, Round } from './Game';
 import { Deck } from './Deck';
 import { Card, Suits } from './Card';
-import { HandValue } from './Holdem';
-export { Game, HandValue, Deck, Card, Suits };
+import { HandValue, Result } from './Holdem';
+export { Game, HandValue, Result, Deck, Card, Suits, Player, Round };
 declare global {
     interface Window {
         Game: Game;
@@ -10,5 +10,8 @@ declare global {
         Deck: Deck;
         Card: Card;
         Suits: typeof Suits;
+        Result: Result;
+        Player: Player;
+        Round: Round;
     }
 }
