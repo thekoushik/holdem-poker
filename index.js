@@ -119,13 +119,13 @@ var Game = /** @class */ (function () {
      * Returns the current pot amount
      */
     Game.prototype.getPot = function () {
-        return this.pot;
+        return this.round.reduce(function (a, c) { return a + c.money; }, this.pot);
     };
     /**
      * Returns the current community cards
      */
     Game.prototype.getTable = function () {
-        return this.table;
+        return this.table.slice(0);
     };
     /**
      * Starts the round if not started yet
@@ -139,13 +139,41 @@ var Game = /** @class */ (function () {
                 activePlayers++;
             }
             this.round[i] = {
-                money: this.players[i].active ? this.initialBet : 0
+                money: 0 //this.players[i].active?this.initialBet:0
             };
         }
         if (activePlayers == 1) {
             this.round = [];
             throw new Error("Game cannot continue");
         }
+    };
+    /**
+     * Bet the initial betting amount
+     *
+     * @param index Player index
+     */
+    Game.prototype.bet = function (index) {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.round[index].decision)
+            throw new Error("Please proceed to next round");
+        this.round[index].money = this.initialBet;
+        this.round[index].decision = "bet";
+    };
+    /**
+     * Bet 0 unit of money
+     *
+     * @param index Player index
+     */
+    Game.prototype.check = function (index) {
+        if (!this.round.length)
+            throw new Error("Game round not started");
+        if (this.round[index].decision)
+            throw new Error("Please proceed to next round");
+        if (this.table.length == 0)
+            throw new Error("Cannot check in opening round");
+        this.round[index].money = 0;
+        this.round[index].decision = "check";
     };
     /**
      * Raise by a player
@@ -158,9 +186,12 @@ var Game = /** @class */ (function () {
             throw new Error("Game round not started");
         if (this.players[index].money < money)
             throw new Error('Too much');
-        if (this.round[index].decision)
+        if (this.round[index].decision && this.round[index].decision != "raise")
             throw new Error("Please proceed to next round");
-        this.round[index].money = money;
+        var raised_money = money;
+        if (!this.table.length)
+            raised_money = money + this.initialBet;
+        this.round[index].money = raised_money;
         this.round[index].decision = "raise";
     };
     /**
@@ -171,8 +202,11 @@ var Game = /** @class */ (function () {
     Game.prototype.call = function (index) {
         if (!this.round.length)
             throw new Error("Game round not started");
-        if (this.round[index].decision)
-            throw new Error("Please proceed to next round");
+        //if(this.round[index].decision) throw new Error("Please proceed to next round");
+        var max_money = this.round.slice(0).sort(function (a, b) { return b.money - a.money; })[0].money;
+        if (max_money == 0)
+            max_money = this.initialBet; //fall back to initial betting amount
+        this.round[index].money = max_money;
         this.round[index].decision = "call";
     };
     /**
@@ -196,12 +230,19 @@ var Game = /** @class */ (function () {
             throw new Error("Game round not started");
         if (this.table.length >= 3)
             throw new Error("Round is over, please invoke checkResult");
+        var last_amount = -1;
+        var pot = 0;
         for (var i = 0; i < this.round.length; i++) {
-            this.pot += this.round[i].money;
-            this.round[i] = {
-                money: 0
-            };
+            if (this.round[i].decision == "fold")
+                continue;
+            var money = this.round[i].money;
+            if (last_amount < 0)
+                last_amount = money;
+            else if (money != last_amount)
+                throw new Error("Round is not over yet, please call or raise.");
+            pot += money;
         }
+        this.pot += pot;
         this.table.push(this.deck.getCards(1)[0]);
     };
     /**

@@ -11,7 +11,7 @@ export interface Player {
  */
 export interface Round {
     money: number;
-    decision?: "fold" | "raise" | "call";
+    decision?: "fold" | "raise" | "call" | "check" | "bet";
 }
 export declare class Game {
     private pot;
@@ -54,6 +54,18 @@ export declare class Game {
      * Starts the round if not started yet
      */
     startRound(): void;
+    /**
+     * Bet the initial betting amount
+     *
+     * @param index Player index
+     */
+    bet(index: number): void;
+    /**
+     * Bet 0 unit of money
+     *
+     * @param index Player index
+     */
+    check(index: number): void;
     /**
      * Raise by a player
      *
