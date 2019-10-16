@@ -39,6 +39,8 @@ string with value any one of **CLUB**, **DIAMOND**, **HEART**, **SPADE**
   Match the highest bet in the same round
 - **fold(index: number): void** ⇒
   Fold by a player
+- **canEndRound(): boolean** ⇒
+  Whether the current round can be ended
 - **endRound(): void** ⇒
   Ends the current round.
 - **checkResult(): Result** ⇒
