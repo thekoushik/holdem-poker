@@ -86,6 +86,10 @@ export declare class Game {
      */
     fold(index: number): void;
     /**
+     * Whether the current round can be ended
+     */
+    canEndRound(): boolean;
+    /**
      * Ends the current round.
      */
     endRound(): void;

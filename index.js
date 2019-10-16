@@ -223,6 +223,22 @@ var Game = /** @class */ (function () {
         this.players[index].folded = true;
     };
     /**
+     * Whether the current round can be ended
+     */
+    Game.prototype.canEndRound = function () {
+        var last_amount = -1;
+        for (var i = 0; i < this.round.length; i++) {
+            if (this.round[i].decision == "fold")
+                continue;
+            var money = this.round[i].money;
+            if (last_amount < 0)
+                last_amount = money;
+            else if (money != last_amount)
+                return false;
+        }
+        return true;
+    };
+    /**
      * Ends the current round.
      */
     Game.prototype.endRound = function () {

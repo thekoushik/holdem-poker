@@ -160,6 +160,21 @@ export class Game{
         this.players[index].folded=true;
     }
     /**
+     * Whether the current round can be ended
+     */
+    canEndRound(){
+        let last_amount=-1;
+        for(let i=0;i<this.round.length;i++){
+            if(this.round[i].decision=="fold") continue;
+            let money=this.round[i].money;
+            if(last_amount<0)
+                last_amount=money;
+            else if(money!=last_amount)
+                return false;
+        }
+        return true;
+    }
+    /**
      * Ends the current round.
      */
     endRound():void{
