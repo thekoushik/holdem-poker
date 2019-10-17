@@ -69,8 +69,8 @@ var Game = /** @class */ (function () {
     /**
      * Inititalizes the Game
      *
-     * @param playerMoney   Number of players will be the same length as
-     * @param initialBet    Minimum amount to start with
+     * @param playerMoney   Array of player money to start with, number of players will be of same length
+     * @param initialBet    Minimum betting amount to start with
      */
     function Game(playerMoney, initialBet) {
         this.pot = 0;
@@ -104,28 +104,36 @@ var Game = /** @class */ (function () {
         });
     };
     /**
-     * Returns the array of player
+     * Returns the current game state
      */
-    Game.prototype.getPlayers = function () {
-        return this.players.slice(0);
-    };
-    /**
-     * Returns the current round. This Array represents each players' current investment and decision
-     */
-    Game.prototype.getRound = function () {
-        return this.round.slice(0);
-    };
-    /**
-     * Returns the current pot amount
-     */
-    Game.prototype.getPot = function () {
-        return this.round.reduce(function (a, c) { return a + c.money; }, this.pot);
-    };
-    /**
-     * Returns the current community cards
-     */
-    Game.prototype.getTable = function () {
-        return this.table.slice(0);
+    Game.prototype.getState = function () {
+        var _this = this;
+        return {
+            communityCards: this.table.slice(0),
+            pot: this.round.reduce(function (a, c) { return a + c.money; }, this.pot),
+            players: this.players.map(function (p, i) {
+                var availableActions = [];
+                if (p.active) {
+                    if (_this.table.length == 0) {
+                        availableActions.push("bet", "fold");
+                    }
+                    else if (_this.round.length) {
+                        if (_this.round[i].decision != "fold") {
+                            availableActions.push("raise", "call", "check", "fold");
+                        }
+                    }
+                }
+                return {
+                    money: p.money,
+                    hand: p.hand,
+                    folded: p.folded,
+                    active: p.active,
+                    currentDecision: (_this.round.length && _this.round[i].decision) || '',
+                    currentBet: (_this.round.length && _this.round[i].money) || 0,
+                    availableActions: availableActions
+                };
+            })
+        };
     };
     /**
      * Starts the round if not started yet
@@ -139,7 +147,7 @@ var Game = /** @class */ (function () {
                 activePlayers++;
             }
             this.round[i] = {
-                money: 0 //this.players[i].active?this.initialBet:0
+                money: 0,
             };
         }
         if (activePlayers == 1) {

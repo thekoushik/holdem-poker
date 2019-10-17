@@ -15,18 +15,33 @@ string with value any one of **CLUB**, **DIAMOND**, **HEART**, **SPADE**
 - value: number
 >Note: value is in the range from 2 to 14 where 11 = J, 12 = Q, 13 = K and 14 = A
 
+### GameState
+- pot: number
+> Current pot amount
+- communityCards: Array<Card>
+> Community cards at the table
+- players: Array
+ - money: number
+ > Amount of money a player have
+ - hand: Array<Card>
+ > Player cards
+ - folded: boolean
+ > Whether the player already folded
+ - active: boolean
+ > Is the player left the game or not
+ - currentDecision: string
+ > Current decision the player has made
+ - currentBet: number
+ > Betting amount for current round
+ - availableActions: Array<string>
+ > Actions the player can take at the moment
+
 ### Game
 - **constructor(playerMoney: Array&lt;number&gt;, initialBet: number)** ⇒
   Inititalizes the Game. The deck is shuffled randomly with 'Fisher-Yates' algorithm.
   Number of players will be the same length as ***playerMoney*** 
-- **getPlayers(): Player[]** ⇒
-  Returns the array of player
-- **getRound(): Round[]** ⇒
-  Returns the current round. This Array represents each players' current investment and decision
-- **getPot(): number** ⇒
-  Returns the current pot amount
-- **getTable(): Card[]** ⇒
-  Returns the current community cards
+- **getState(): GameState** ⇒
+  Returns the current game state
 - **startRound(): void** ⇒
   Starts the round if not started yet
 - **bet(index: number): void** ⇒
@@ -64,26 +79,26 @@ var {Game} = require('holdem-poker');
 //initialize with 2 players, each having 100 unit money, and initial bet is 10 unit
 var game=new Game([ 100, 100 ], 10);
 //a demo gameplay is shown bellow
-console.log('Players',game.getPlayers().map(function(m){return m.hand}))
+console.log('Players',game.getState().players.map(function(m){return m.hand}))
 //round 1
 game.startRound();
 game.bet(0);//for player 1
 game.raise(1,20);//for player 2
 game.call(0)
 game.endRound()
-console.log('Table',game.getTable());
+console.log('Table',game.getState().communityCards);
 //round 2
 game.startRound();
 game.check(0);//for player 1
 game.check(1);//for player 2
 game.endRound()
-console.log('Table',game.getTable());
+console.log('Table',game.getState().communityCards);
 //round 3
 game.startRound();
 game.raise(0,50);//for player 1
 game.call(1);//for player 2
 game.endRound()
-console.log('Table',game.getTable());
+console.log('Table',game.getState().communityCards);
 //end game
 var result=game.checkResult();
 if(result.type=='win'){

@@ -1,4 +1,4 @@
-import {Game,Player,Round} from './Game';
+import {Game, GameState} from './Game';
 import {Deck} from './Deck';
 import {Card,Suits} from './Card';
 import { HandValue, Result } from './Holdem';
@@ -10,8 +10,7 @@ export {
     Deck,
     Card,
     Suits,
-    Player,
-    Round
+    GameState
 }
 
 declare global {
@@ -22,8 +21,7 @@ declare global {
         Card:Card,
         Suits:typeof Suits,
         Result:Result,
-        Player:Player,
-        Round:Round,
+        GameState:GameState
     }
 }
 

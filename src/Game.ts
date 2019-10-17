@@ -2,19 +2,66 @@ import { Deck } from "./deck";
 import { Card } from "./Card";
 import { Holdem, HandValue, Result } from "./Holdem";
 
-export interface Player{
+interface Player{
     money:number;
     hand:Array<Card>;
     folded:boolean;
-    active:boolean
+    active:boolean;
 }
 /**
  * Round represents a player's current investment and decision
  */
-export interface Round{
+interface Round{
     money:number;
     decision?:"fold"|"raise"|"call"|"check"|"bet";
 }
+/**
+ * Represents game state
+ */
+export interface GameState{
+    /**
+     * Current pot amount
+     */
+    pot:number;
+    /**
+     * Community cards at the table
+     */
+    communityCards:Array<Card>;
+    /**
+     * Player statuses
+     */
+    players:Array<{
+        /**
+         * Amount of money a player have
+         */
+        money:number,
+        /**
+         * Player cards
+         */
+        hand:Array<Card>,
+        /**
+         * Whether the player already folded
+         */
+        folded:boolean,
+        /**
+         * Is the player left the game or not
+         */
+        active:boolean,
+        /**
+         * Current decision the player has made
+         */
+        currentDecision:string,
+        /**
+         * Betting amount for current round
+         */
+        currentBet:number,
+        /**
+         * Actions the player can take at the moment
+         */
+        availableActions:Array<string>
+    }>;
+}
+
 export class Game{
     private pot:number=0;
     private players:Array<Player>=[];
@@ -26,8 +73,8 @@ export class Game{
     /**
      * Inititalizes the Game
      * 
-     * @param playerMoney   Number of players will be the same length as
-     * @param initialBet    Minimum amount to start with
+     * @param playerMoney   Array of player money to start with, number of players will be of same length
+     * @param initialBet    Minimum betting amount to start with
      */
     constructor(playerMoney:Array<number>,initialBet:number){
         this.initialBet=initialBet;
@@ -54,28 +101,34 @@ export class Game{
         });
     }
     /**
-     * Returns the array of player
+     * Returns the current game state
      */
-    getPlayers(){
-        return this.players.slice(0);
-    }
-    /**
-     * Returns the current round. This Array represents each players' current investment and decision
-     */
-    getRound(){
-        return this.round.slice(0);
-    }
-    /**
-     * Returns the current pot amount
-     */
-    getPot(){
-        return this.round.reduce((a,c)=>a+c.money,this.pot);
-    }
-    /**
-     * Returns the current community cards
-     */
-    getTable(){
-        return this.table.slice(0);
+    getState():GameState{
+        return {
+            communityCards: this.table.slice(0),
+            pot: this.round.reduce((a,c)=>a+c.money,this.pot),
+            players:this.players.map((p,i)=>{
+                let availableActions:Array<string>=[];
+                if(p.active){
+                    if(this.table.length==0){
+                        availableActions.push("bet","fold");
+                    }else if(this.round.length){
+                        if(this.round[i].decision!="fold"){
+                            availableActions.push("raise","call","check","fold")
+                        }
+                    }
+                }
+                return {
+                    money:p.money,
+                    hand:p.hand,
+                    folded:p.folded,
+                    active:p.active,
+                    currentDecision:(this.round.length && this.round[i].decision)||'',
+                    currentBet:(this.round.length && this.round[i].money)||0,
+                    availableActions
+                }
+            })
+        }
     }
     /**
      * Starts the round if not started yet
@@ -89,7 +142,7 @@ export class Game{
                 activePlayers++;
             }
             this.round[i]={
-                money:0//this.players[i].active?this.initialBet:0
+                money:0,//this.players[i].active?this.initialBet:0
             };
         }
         if(activePlayers==1){

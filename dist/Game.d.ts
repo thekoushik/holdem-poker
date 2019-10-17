@@ -1,17 +1,50 @@
 import { Card } from "./Card";
 import { HandValue, Result } from "./Holdem";
-export interface Player {
-    money: number;
-    hand: Array<Card>;
-    folded: boolean;
-    active: boolean;
-}
 /**
- * Round represents a player's current investment and decision
+ * Represents game state
  */
-export interface Round {
-    money: number;
-    decision?: "fold" | "raise" | "call" | "check" | "bet";
+export interface GameState {
+    /**
+     * Current pot amount
+     */
+    pot: number;
+    /**
+     * Community cards at the table
+     */
+    communityCards: Array<Card>;
+    /**
+     * Player statuses
+     */
+    players: Array<{
+        /**
+         * Amount of money a player have
+         */
+        money: number;
+        /**
+         * Player cards
+         */
+        hand: Array<Card>;
+        /**
+         * Whether the player already folded
+         */
+        folded: boolean;
+        /**
+         * Is the player left the game or not
+         */
+        active: boolean;
+        /**
+         * Current decision the player has made
+         */
+        currentDecision: string;
+        /**
+         * Betting amount for current round
+         */
+        currentBet: number;
+        /**
+         * Actions the player can take at the moment
+         */
+        availableActions: Array<string>;
+    }>;
 }
 export declare class Game {
     private pot;
@@ -24,8 +57,8 @@ export declare class Game {
     /**
      * Inititalizes the Game
      *
-     * @param playerMoney   Number of players will be the same length as
-     * @param initialBet    Minimum amount to start with
+     * @param playerMoney   Array of player money to start with, number of players will be of same length
+     * @param initialBet    Minimum betting amount to start with
      */
     constructor(playerMoney: Array<number>, initialBet: number);
     /**
@@ -35,21 +68,9 @@ export declare class Game {
      */
     private newRound;
     /**
-     * Returns the array of player
+     * Returns the current game state
      */
-    getPlayers(): Player[];
-    /**
-     * Returns the current round. This Array represents each players' current investment and decision
-     */
-    getRound(): Round[];
-    /**
-     * Returns the current pot amount
-     */
-    getPot(): number;
-    /**
-     * Returns the current community cards
-     */
-    getTable(): Card[];
+    getState(): GameState;
     /**
      * Starts the round if not started yet
      */

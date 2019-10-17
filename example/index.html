@@ -10,26 +10,26 @@
             //initialize with 2 players, each having 100 unit money, and initial bet is 10 unit
             var game=new Poker.Game([ 100, 100 ], 10);
             //a demo gameplay is shown bellow
-            console.log('Players',game.getPlayers().map(function(m){return m.hand}))
+            console.log('Players',game.getState().players.map(function(m){return m.hand}))
             //round 1
             game.startRound();
             game.bet(0);//for player 1
             game.raise(1,20);//for player 2
             game.call(0)
             game.endRound()
-            console.log('Table',game.getTable());
+            console.log('Table',game.getState().communityCards);
             //round 2
             game.startRound();
             game.check(0);//for player 1
             game.check(1);//for player 2
             game.endRound()
-            console.log('Table',game.getTable());
+            console.log('Table',game.getState().communityCards);
             //round 3
             game.startRound();
             game.raise(0,50);//for player 1
             game.call(1);//for player 2
             game.endRound()
-            console.log('Table',game.getTable());
+            console.log('Table',game.getState().communityCards);
             //end game
             var result=game.checkResult();
             if(result.type=='win'){
