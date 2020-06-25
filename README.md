@@ -99,6 +99,11 @@ game.raise(0,50);//for player 1
 game.call(1);//for player 2
 game.endRound()
 console.log('Table',game.getState().communityCards);
+//round 4
+game.startRound();
+game.call(0);//for player 1
+game.call(1);//for player 2
+game.endRound()
 //end game
 var result=game.checkResult();
 if(result.type=='win'){

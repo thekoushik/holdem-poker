@@ -70,6 +70,7 @@ export class Game{
     private round:Array<Round>=[];
     private __instance:Holdem=new Holdem();
     private initialBet:number;
+    private __roundStates:Array<Array<Round>>=[];
     /**
      * Inititalizes the Game
      * 
@@ -91,6 +92,7 @@ export class Game{
         this.deck.shuffle();
         this.table=[];
         this.round=[];
+        this.__roundStates=[];
         this.players=playerMoney.map((money:number)=>{
             return {
                 money,
@@ -232,7 +234,7 @@ export class Game{
      */
     endRound():void{
         if(!this.round.length) throw new Error("Game round not started");
-        if(this.table.length>=3) throw new Error("Round is over, please invoke checkResult");
+        if(this.__roundStates.length==4) throw new Error("Round is over, please invoke checkResult");
         let last_amount=-1;
         let pot=0;
         for(let i=0;i<this.round.length;i++){
@@ -245,7 +247,12 @@ export class Game{
             pot+=money;
         }
         this.pot+=pot;
-        this.table.push(this.deck.getCards(1)[0]);
+        this.__roundStates.push(this.round.slice(0));
+        if(this.__roundStates.length<4){
+            let communityCardCountForThisRound=1;
+            if(this.table.length==0) communityCardCountForThisRound=3;
+            this.table.push.apply(this.table,this.deck.getCards(communityCardCountForThisRound));
+        }
     }
     /**
      * Returns the result of the current round

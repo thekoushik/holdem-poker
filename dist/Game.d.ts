@@ -54,6 +54,7 @@ export declare class Game {
     private round;
     private __instance;
     private initialBet;
+    private __roundStates;
     /**
      * Inititalizes the Game
      *

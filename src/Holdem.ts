@@ -280,4 +280,42 @@ export class Holdem{
 			return result;
 		}
     }
+    /*computeHandAllPartialStat(hand:Array<Card>){
+        let stat = {
+            hicard:0,
+            pair:0,
+            two_pairs:0,
+            three_of_a_kind:0,
+            straight:0,
+            flush:0,
+            full_house:0,
+            four_of_a_kind:0,
+            straight_flush:0,
+            royal_flush:0
+        };
+        let result = this.computeHand(hand,hand);
+        
+    }*/
+	/** TODO
+	Maximum number of raises
+	Most fixed-limit games will not allow more than a predefined number of raises in a betting round.
+	The maximum number of raises depends on the casino house rules, and is usually posted conspicuously
+	in the card room. Typically, an initial bet plus either three or four raises are allowed.
+
+	Consider this example in a $20/$40 game, with a posted limit of a bet and three raises.
+	During a $20 round with three players, play could proceed as follows:
+
+	Player A bets $20.
+	Player B puts in another bet, raises another $20, making it $40 to play.
+	Player C puts in a third bet, raising another $20 on that, thus making it $60 to play.
+	Player A puts in the fourth bet (they are usually said to cap the betting).
+	Once Player A has made their final bet, Players B and C may only call another two and one
+	bets (respectively); they may not raise again because the betting is capped.
+
+	A common exception in this rule practiced in some card rooms is to allow unlimited raising
+	when a pot is played heads up (when only two players are in the hand at the start of the
+	betting round). Usually, this has occurred because all other players have folded, and only
+	two remain, although it is also practiced when only two players get dealt in. Many card rooms
+	will permit these two players to continue re-raising each other until one player is all in.
+	*/
 }
