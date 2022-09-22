@@ -1,6 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Poker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Card = exports.Suits = void 0;
 exports.Suits = {
     CLUB: "CLUB",
     DIAMOND: "DIAMOND",
@@ -35,6 +36,7 @@ exports.Card = Card;
 },{}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Deck = void 0;
 var Card_1 = require("./Card");
 var Deck = /** @class */ (function () {
     function Deck() {
@@ -63,6 +65,7 @@ exports.Deck = Deck;
 },{"./Card":1}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Game = void 0;
 var deck_1 = require("./deck");
 var Holdem_1 = require("./Holdem");
 var Game = /** @class */ (function () {
@@ -149,7 +152,7 @@ var Game = /** @class */ (function () {
                 activePlayers++;
             }
             this.round[i] = {
-                money: 0,
+                money: 0, //this.players[i].active?this.initialBet:0
             };
         }
         if (activePlayers == 1) {
@@ -329,8 +332,10 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Holdem = exports.DESC = void 0;
 var TieBreaker_1 = require("./TieBreaker");
-exports.DESC = function (a, b) { return b.value - a.value; };
+var DESC = function (a, b) { return b.value - a.value; };
+exports.DESC = DESC;
 var ASC = function (a, b) { return a.value - b.value; };
 var VASC = function (a, b) { return a - b; };
 var HAND_HICARD = "Hi Card";
@@ -571,7 +576,7 @@ var Holdem = /** @class */ (function () {
         var _this = this;
         var ranks = hands.map(function (f, index) {
             var hand = f.concat(community);
-            return __assign({}, _this.computeHand(hand, f), { index: index, cache: _this.test_cache, hand: hand });
+            return __assign(__assign({}, _this.computeHand(hand, f)), { index: index, cache: _this.test_cache, hand: hand });
         }).sort(exports.DESC);
         if (ranks[0].value > ranks[1].value) {
             var result = { type: "win", index: ranks[0].index, name: ranks[0].name };
@@ -582,7 +587,7 @@ var Holdem = /** @class */ (function () {
         else {
             //console.log(ranks);
             var highest_rank_name_1 = ranks[0].name;
-            var result = __assign({}, TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; })), { 
+            var result = __assign(__assign({}, TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; }))), { 
                 //put the highest rank name
                 name: highest_rank_name_1 });
             return result;
@@ -606,6 +611,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.TieBreaker = void 0;
 var BreakTieUsingHiCard = function (ranks) {
     var max_card_index = -1;
     var max_card_value = 0;
@@ -660,7 +666,7 @@ exports.TieBreaker = {
             }
             var candidates = max_pair_counter['max' + max_pair_val].map(function (m) {
                 var pair_value = ranks[m].cache.pair.value;
-                return __assign({}, ranks[m], { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
+                return __assign(__assign({}, ranks[m]), { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
             });
             return exports.TieBreaker["Hi Card"](candidates);
         }
@@ -751,7 +757,7 @@ exports.TieBreaker = {
             }
             var candidates = max_pair_counter['max' + max_pair_val].map(function (m) {
                 var pair_value = ranks[m].cache.three_of_a_kind.value;
-                return __assign({}, ranks[m], { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
+                return __assign(__assign({}, ranks[m]), { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
             });
             return exports.TieBreaker["Hi Card"](candidates);
         }
@@ -866,13 +872,14 @@ arguments[4][2][0].apply(exports,arguments)
 },{"./Card":1,"dup":2}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Suits = exports.Card = exports.Deck = exports.Game = void 0;
 var Game_1 = require("./Game");
-exports.Game = Game_1.Game;
+Object.defineProperty(exports, "Game", { enumerable: true, get: function () { return Game_1.Game; } });
 var Deck_1 = require("./Deck");
-exports.Deck = Deck_1.Deck;
+Object.defineProperty(exports, "Deck", { enumerable: true, get: function () { return Deck_1.Deck; } });
 var Card_1 = require("./Card");
-exports.Card = Card_1.Card;
-exports.Suits = Card_1.Suits;
+Object.defineProperty(exports, "Card", { enumerable: true, get: function () { return Card_1.Card; } });
+Object.defineProperty(exports, "Suits", { enumerable: true, get: function () { return Card_1.Suits; } });
 
 },{"./Card":1,"./Deck":2,"./Game":3}]},{},[7])(7)
 });
