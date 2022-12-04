@@ -19,6 +19,7 @@ export interface Result {
     name?: string;
     suit?: string;
     value?: number;
+    tieBreakHiCard?: boolean;
 }
 interface TestCache {
     hicard: {
@@ -38,7 +39,10 @@ interface TestCache {
         indices: Array<number>;
     };
     four_of_a_kind: number;
-    straight: any;
+    straight: {
+        start?: number;
+        result: boolean;
+    };
     flush: any;
     straight_flush: boolean;
 }

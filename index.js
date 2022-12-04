@@ -473,6 +473,8 @@ var Holdem = /** @class */ (function () {
     Holdem.prototype.TestStraight = function (hand, mainCards) {
         var seq_count = 0;
         var seq_start = -1;
+        var max_seq_count = 0;
+        var max_seq_start = -1;
         var seq = hand.slice(0).sort(ASC);
         for (var i = 0; i < seq.length - 1; i++) {
             if (seq[i].value === seq[i + 1].value - 1) {
@@ -480,12 +482,23 @@ var Holdem = /** @class */ (function () {
                     seq_start = i;
                 seq_count++;
             }
-            else if (seq_count < 3) {
+            else if (seq_count < 4) {
+                // save max progress
+                if (max_seq_count < seq_count) {
+                    max_seq_count = seq_count;
+                    max_seq_start = seq_start;
+                }
                 seq_count = 0;
                 seq_start = -1;
             }
         }
-        var result = seq_count > 3 || (seq_count == 3 && seq_start == 0 && seq[seq.length - 1].value == 14);
+        // restore max progress
+        if (max_seq_count > seq_count) {
+            seq_count = max_seq_count;
+            seq_start = max_seq_start;
+        }
+        // sequence count is always one less because we check next card
+        var result = seq_count >= 4 || (seq_count == 3 && seq_start == 0 && seq[seq.length - 1].value == 14);
         this.test_cache.straight.result = result;
         if (result) {
             this.test_cache.straight.start = hand.findIndex(function (f) { return f.suit == seq[seq_start].suit && f.value == seq[seq_start].value; });
@@ -521,8 +534,8 @@ var Holdem = /** @class */ (function () {
     };
     //Straight of the same suit
     Holdem.prototype.TestStraightFlush = function (hand, mainCards) {
-        if (this.test_cache.straight.result && this.test_cache.flush.result) {
-            if (hand[this.test_cache.straight.start].suit == this.test_cache.flush.suit) {
+        if (this.test_cache.straight.result && this.test_cache.straight.start !== undefined && this.test_cache.flush.result) {
+            if (hand[this.test_cache.straight.start].suit === this.test_cache.flush.suit) {
                 this.test_cache.straight_flush = true;
                 return true;
             }
@@ -530,7 +543,7 @@ var Holdem = /** @class */ (function () {
     };
     //Straight flush from Ten to Ace
     Holdem.prototype.TestRoyalFlush = function (hand, mainCards) {
-        return this.test_cache.straight_flush && hand[this.test_cache.straight.start].value == 10;
+        return this.test_cache.straight_flush && this.test_cache.straight.start !== undefined && hand[this.test_cache.straight.start].value == 10;
     };
     Holdem.prototype.computeHand = function (allcards, mainCards) {
         var _this = this;
@@ -566,7 +579,8 @@ var Holdem = /** @class */ (function () {
             else
                 this.test_summary.value[value].push(i);
         }
-        var result = this.TestSeries.map(function (t, i) { return i == 0 ? t.fn.call(_this, allcards, mainCards) : (t.fn.call(_this, allcards, mainCards) ? (i + 14) : 0); }).sort(VASC).pop();
+        var sorted_summary = this.TestSeries.map(function (t, i) { return i == 0 ? t.fn.call(_this, allcards, mainCards) : (t.fn.call(_this, allcards, mainCards) ? (i + 14) : 0); }).sort(VASC);
+        var result = sorted_summary.pop();
         return {
             name: this.TestSeries[Math.max(result - 14, 0)].name,
             value: result
@@ -576,7 +590,7 @@ var Holdem = /** @class */ (function () {
         var _this = this;
         var ranks = hands.map(function (f, index) {
             var hand = f.concat(community);
-            return __assign(__assign({}, _this.computeHand(hand, f)), { index: index, cache: _this.test_cache, hand: hand });
+            return __assign(__assign({}, _this.computeHand(hand, f)), { index: index, cache: Object.assign([], _this.test_cache), hand: hand });
         }).sort(exports.DESC);
         if (ranks[0].value > ranks[1].value) {
             var result = { type: "win", index: ranks[0].index, name: ranks[0].name };
@@ -585,11 +599,12 @@ var Holdem = /** @class */ (function () {
             return result;
         }
         else {
-            //console.log(ranks);
+            //console.log(JSON.stringify(ranks, null, 1));
             var highest_rank_name_1 = ranks[0].name;
-            var result = __assign(__assign({}, TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; }))), { 
+            var tieBreak = TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; }));
+            var result = __assign(__assign({}, tieBreak), { 
                 //put the highest rank name
-                name: highest_rank_name_1 });
+                name: tieBreak.tieBreakHiCard ? HAND_HICARD : highest_rank_name_1 });
             return result;
         }
     };
@@ -629,7 +644,7 @@ var BreakTieUsingHiCard = function (ranks) {
     }
     if (max_card_index >= 0) {
         if (max_card_map[max_card_value] == 1) {
-            return { type: 'win', index: ranks[max_card_index].index, value: max_card_value };
+            return { type: 'win', index: ranks[max_card_index].index, value: max_card_value, tieBreakHiCard: true };
         }
     }
     return { type: 'draw' };
