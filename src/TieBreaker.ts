@@ -1,13 +1,13 @@
 import { Rank, Result } from "./Holdem";
 
-const BreakTieUsingHiCard = (ranks: Array<Rank>): Result => {
+const highCardTie = (ranks: Array<Rank>, high = true): Result => {
     let max_card_index = -1;
     let max_card_value = 0;
     let max_card_map: any = {};
     for (let i = 0; i < ranks.length; i++) {
-        let hicard = ranks[i].cache.hicard.value;
-        if (max_card_value <= hicard) {
-            max_card_value = hicard;
+        let value = high ? ranks[i].cache.high_card.value : ranks[i].cache.high_card.kicker.value;
+        if (max_card_value <= value) {
+            max_card_value = value;
             max_card_index = i;
             if (!max_card_map[max_card_value])
                 max_card_map[max_card_value] = 1;
@@ -17,10 +17,23 @@ const BreakTieUsingHiCard = (ranks: Array<Rank>): Result => {
     }
     if (max_card_index >= 0) {
         if (max_card_map[max_card_value] == 1) {
-            return { type: 'win', index: ranks[max_card_index].index, value: max_card_value, tieBreakHiCard: true };
+            return {
+                type: 'win',
+                index: ranks[max_card_index].index,
+                value: max_card_value,
+                tieBreak: max_card_value
+            };
         }
     }
     return { type: 'draw' };
+}
+
+const BreakTieUsingHighCard = (ranks: Array<Rank>): Result => {
+    let result = highCardTie(ranks);
+    if (result.type === "draw") {
+        result = highCardTie(ranks, false);
+    }
+    return result;
 }
 export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
     /**
@@ -29,7 +42,7 @@ export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
      * That Two Players Hold The Identical Five Cards, The Pot Would Be Split.
      * 
      */
-    "Hi Card": BreakTieUsingHiCard,
+    "High Card": BreakTieUsingHighCard,
     /**
      * If Two Or More Players Hold A Single Pair Then Highest Pair Wins. If The Pairs Are Of The Same Value,
      * The Highest Kicker Card Determines The Winner. A Second And Even Third Kicker Can Be Used If Necessary
@@ -59,7 +72,7 @@ export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
                     hand: ranks[m].hand.filter(f => f.value != pair_value)
                 }
             });
-            return TieBreaker["Hi Card"](candidates);
+            return TieBreaker["High Card"](candidates);
         }
         return { type: 'draw' };
     },
@@ -149,7 +162,7 @@ export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
                     hand: ranks[m].hand.filter(f => f.value != pair_value)
                 }
             });
-            return TieBreaker["Hi Card"](candidates);
+            return TieBreaker["High Card"](candidates);
         }
         return { type: 'draw' };
     },
@@ -158,14 +171,14 @@ export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
      * One Player Has A Straight, The Straight Ending In The Card Wins. If Both Straights End In A Card
      * Of The Same Strength, The Hand Is Tied.
      */
-    "Straight": BreakTieUsingHiCard,
+    "Straight": BreakTieUsingHighCard,
     /**
      * A Flush Is Any Hand With Five Cards Of The Same Suit. If Two Or More Players Hold A Flush,
      * The Flush With The Highest Card Wins. If More Than One Player Has The Same Strength High
      * Card, Then The Strength Of The Second Highest Card Held Wins. This Continues Through The Five
      * Highest Cards In The Player's Hands.
      */
-    "Flush": BreakTieUsingHiCard,
+    "Flush": BreakTieUsingHighCard,
     /**
      * When Two Or More Players Have Full Houses, We Look First At The Strength Of The Three Of A
      * Kind To Determine The Winner. For Example, Aces Full Of Deuces (AAA22) Beats Kings Full Of
@@ -240,7 +253,7 @@ export const TieBreaker: { [key: string]: (_ranks: Array<Rank>) => Result } = {
      * High And A Jack High Beats A Ten High And So On. The Suit Never Comes Into Play I.E. A Seven
      * High Straight Flush Of Diamonds Will Split The Pot With A Seven High Straight Flush Of Hearts.
      */
-    "Straight flush": BreakTieUsingHiCard,
+    "Straight flush": BreakTieUsingHighCard,
     /**
      * An Ace-High Straight Flush Is Called Royal Flush. A Royal Flush Is The Highest Hand In Poker.
      * Between Two Royal Flushes, There Can Be No Tie Breaker. If Two Players Have Royal Flushes,

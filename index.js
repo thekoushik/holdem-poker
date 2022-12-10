@@ -338,7 +338,7 @@ var DESC = function (a, b) { return b.value - a.value; };
 exports.DESC = DESC;
 var ASC = function (a, b) { return a.value - b.value; };
 var VASC = function (a, b) { return a - b; };
-var HAND_HICARD = "Hi Card";
+var HAND_HIGHCARD = "High Card";
 var HAND_PAIR = "Pair";
 var HAND_TWOPAIRS = "Two pairs";
 var HAND_THREEOFAKIND = "Three of a kind";
@@ -351,9 +351,13 @@ var HAND_ROYALFLUSH = "Royal flush";
 var Holdem = /** @class */ (function () {
     function Holdem() {
         this.test_cache = {
-            hicard: {
+            high_card: {
                 suit: '',
-                value: 0
+                value: 0,
+                kicker: {
+                    suit: '',
+                    value: 0,
+                }
             },
             pair: {
                 value: 0,
@@ -377,7 +381,7 @@ var Holdem = /** @class */ (function () {
             suit: {}
         };
         this.TestSeries = [
-            { name: HAND_HICARD, fn: this.TestHicard },
+            { name: HAND_HIGHCARD, fn: this.TestHighCard },
             { name: HAND_PAIR, fn: this.TestPair },
             { name: HAND_TWOPAIRS, fn: this.TestTwoPairs },
             { name: HAND_THREEOFAKIND, fn: this.TestThreeOfAKind },
@@ -390,7 +394,7 @@ var Holdem = /** @class */ (function () {
         ];
         /*computeHandAllPartialStat(hand:Array<Card>){
             let stat = {
-                hicard:0,
+                high_card:0,
                 pair:0,
                 two_pairs:0,
                 three_of_a_kind:0,
@@ -428,10 +432,17 @@ var Holdem = /** @class */ (function () {
         */
     }
     //Simple value of the card. Lowest: 2 - Highest: Ace(14)
-    Holdem.prototype.TestHicard = function (hand, mainCards) {
-        var card = mainCards.slice(0).sort(exports.DESC)[0];
-        this.test_cache.hicard = { suit: card.suit + '', value: card.value };
-        return card.value;
+    Holdem.prototype.TestHighCard = function (hand, mainCards) {
+        var _a = mainCards.slice(0).sort(exports.DESC), high_card = _a[0], kicker = _a[1];
+        this.test_cache.high_card = {
+            suit: "".concat(high_card.suit),
+            value: high_card.value,
+            kicker: {
+                suit: "".concat(kicker.suit),
+                value: kicker.value
+            }
+        };
+        return high_card.value;
     };
     //Two cards with the same value
     Holdem.prototype.TestPair = function (hand, mainCards) {
@@ -548,7 +559,7 @@ var Holdem = /** @class */ (function () {
     Holdem.prototype.computeHand = function (allcards, mainCards) {
         var _this = this;
         this.test_cache = {
-            hicard: { suit: '', value: 0 },
+            high_card: { suit: '', value: 0, kicker: { suit: '', value: 0 } },
             pair: { value: 0, index: -1 },
             two_pairs: {
                 all_indices: [],
@@ -590,21 +601,21 @@ var Holdem = /** @class */ (function () {
         var _this = this;
         var ranks = hands.map(function (f, index) {
             var hand = f.concat(community);
-            return __assign(__assign({}, _this.computeHand(hand, f)), { index: index, cache: Object.assign([], _this.test_cache), hand: hand });
+            return __assign(__assign({}, _this.computeHand(hand, f)), { index: index, cache: Object.assign({}, _this.test_cache), hand: hand });
         }).sort(exports.DESC);
         if (ranks[0].value > ranks[1].value) {
             var result = { type: "win", index: ranks[0].index, name: ranks[0].name };
-            if (result.name == HAND_HICARD)
-                result.suit = ranks[0].cache.hicard.suit;
+            if (result.name == HAND_HIGHCARD)
+                result.suit = ranks[0].cache.high_card.suit;
             return result;
         }
         else {
             //console.log(JSON.stringify(ranks, null, 1));
             var highest_rank_name_1 = ranks[0].name;
-            var tieBreak = TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; }));
-            var result = __assign(__assign({}, tieBreak), { 
+            var conflict = TieBreaker_1.TieBreaker[highest_rank_name_1](ranks.filter(function (r) { return r.name == highest_rank_name_1; }));
+            var result = __assign(__assign({}, conflict), { 
                 //put the highest rank name
-                name: tieBreak.tieBreakHiCard ? HAND_HICARD : highest_rank_name_1 });
+                name: highest_rank_name_1 });
             return result;
         }
     };
@@ -627,14 +638,15 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TieBreaker = void 0;
-var BreakTieUsingHiCard = function (ranks) {
+var highCardTie = function (ranks, high) {
+    if (high === void 0) { high = true; }
     var max_card_index = -1;
     var max_card_value = 0;
     var max_card_map = {};
     for (var i = 0; i < ranks.length; i++) {
-        var hicard = ranks[i].cache.hicard.value;
-        if (max_card_value <= hicard) {
-            max_card_value = hicard;
+        var value = high ? ranks[i].cache.high_card.value : ranks[i].cache.high_card.kicker.value;
+        if (max_card_value <= value) {
+            max_card_value = value;
             max_card_index = i;
             if (!max_card_map[max_card_value])
                 max_card_map[max_card_value] = 1;
@@ -644,10 +656,22 @@ var BreakTieUsingHiCard = function (ranks) {
     }
     if (max_card_index >= 0) {
         if (max_card_map[max_card_value] == 1) {
-            return { type: 'win', index: ranks[max_card_index].index, value: max_card_value, tieBreakHiCard: true };
+            return {
+                type: 'win',
+                index: ranks[max_card_index].index,
+                value: max_card_value,
+                tieBreak: max_card_value
+            };
         }
     }
     return { type: 'draw' };
+};
+var BreakTieUsingHighCard = function (ranks) {
+    var result = highCardTie(ranks);
+    if (result.type === "draw") {
+        result = highCardTie(ranks, false);
+    }
+    return result;
 };
 exports.TieBreaker = {
     /**
@@ -656,7 +680,7 @@ exports.TieBreaker = {
      * That Two Players Hold The Identical Five Cards, The Pot Would Be Split.
      *
      */
-    "Hi Card": BreakTieUsingHiCard,
+    "High Card": BreakTieUsingHighCard,
     /**
      * If Two Or More Players Hold A Single Pair Then Highest Pair Wins. If The Pairs Are Of The Same Value,
      * The Highest Kicker Card Determines The Winner. A Second And Even Third Kicker Can Be Used If Necessary
@@ -683,7 +707,7 @@ exports.TieBreaker = {
                 var pair_value = ranks[m].cache.pair.value;
                 return __assign(__assign({}, ranks[m]), { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
             });
-            return exports.TieBreaker["Hi Card"](candidates);
+            return exports.TieBreaker["High Card"](candidates);
         }
         return { type: 'draw' };
     },
@@ -774,7 +798,7 @@ exports.TieBreaker = {
                 var pair_value = ranks[m].cache.three_of_a_kind.value;
                 return __assign(__assign({}, ranks[m]), { hand: ranks[m].hand.filter(function (f) { return f.value != pair_value; }) });
             });
-            return exports.TieBreaker["Hi Card"](candidates);
+            return exports.TieBreaker["High Card"](candidates);
         }
         return { type: 'draw' };
     },
@@ -783,14 +807,14 @@ exports.TieBreaker = {
      * One Player Has A Straight, The Straight Ending In The Card Wins. If Both Straights End In A Card
      * Of The Same Strength, The Hand Is Tied.
      */
-    "Straight": BreakTieUsingHiCard,
+    "Straight": BreakTieUsingHighCard,
     /**
      * A Flush Is Any Hand With Five Cards Of The Same Suit. If Two Or More Players Hold A Flush,
      * The Flush With The Highest Card Wins. If More Than One Player Has The Same Strength High
      * Card, Then The Strength Of The Second Highest Card Held Wins. This Continues Through The Five
      * Highest Cards In The Player's Hands.
      */
-    "Flush": BreakTieUsingHiCard,
+    "Flush": BreakTieUsingHighCard,
     /**
      * When Two Or More Players Have Full Houses, We Look First At The Strength Of The Three Of A
      * Kind To Determine The Winner. For Example, Aces Full Of Deuces (AAA22) Beats Kings Full Of
@@ -871,7 +895,7 @@ exports.TieBreaker = {
      * High And A Jack High Beats A Ten High And So On. The Suit Never Comes Into Play I.E. A Seven
      * High Straight Flush Of Diamonds Will Split The Pot With A Seven High Straight Flush Of Hearts.
      */
-    "Straight flush": BreakTieUsingHiCard,
+    "Straight flush": BreakTieUsingHighCard,
     /**
      * An Ace-High Straight Flush Is Called Royal Flush. A Royal Flush Is The Highest Hand In Poker.
      * Between Two Royal Flushes, There Can Be No Tie Breaker. If Two Players Have Royal Flushes,

@@ -1,6 +1,6 @@
 import { Card, Game, Result, Suits } from '../src';
 /*
-Hi Card
+High Card
 Pair
 Two pairs
 Three of a kind
@@ -39,7 +39,7 @@ describe('Compare hands pair test 0', () => {
     expect(comp.name).toEqual("Pair");
   })
 });
-describe('Compare hand hi card 1', () => {
+describe('Compare hand high card 1', () => {
   let comp: Result;
   beforeAll(() => {
     const game = new Game([0, 0], 0);
@@ -60,11 +60,11 @@ describe('Compare hand hi card 1', () => {
   it('is a draw', () => {
     expect(comp.type).toEqual("draw");
   });
-  it('should be hi card', () => {
-    expect(comp.name).toEqual("Hi Card");
+  it('should be high card', () => {
+    expect(comp.name).toEqual("High Card");
   });
 });
-describe('Compare hand hi card 2', () => {
+describe('Compare hand high card 2', () => {
   let comp: Result;
   beforeAll(() => {
     const game = new Game([0, 0], 0);
@@ -88,8 +88,8 @@ describe('Compare hand hi card 2', () => {
   it('should be the 2nd hand', () => {
     expect(comp.index).toEqual(1);
   });
-  it('should be hi card', () => {
-    expect(comp.name).toEqual("Hi Card");
+  it('should be high card', () => {
+    expect(comp.name).toEqual("High Card");
   });
   it('should be diamond', () => {
     expect(comp.suit).toEqual(Suits.DIAMOND);

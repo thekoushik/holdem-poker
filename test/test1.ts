@@ -16,7 +16,7 @@ describe('Basic wins', () => {
     beforeAll(() => {
         game = new Game([0, 0], 0);
     });
-    it('should be hicard', () => {
+    it('should be high card', () => {
         expect(
             game.computeHand([
                 new Card(Suits.CLUB, 2),
@@ -26,7 +26,7 @@ describe('Basic wins', () => {
                 new Card(Suits.CLUB, 10),
             ]).name
         )
-            .toEqual("Hi Card");
+            .toEqual("High Card");
     });
     it('should be pair', () => {
         expect(

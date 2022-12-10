@@ -5,7 +5,7 @@ export const DESC = (a: any, b: any): number => b.value - a.value;
 const ASC = (a: Card, b: Card): number => a.value - b.value;
 const VASC = (a: number, b: number): number => a - b;
 
-const HAND_HICARD = "Hi Card";
+const HAND_HIGHCARD = "High Card";
 const HAND_PAIR = "Pair";
 const HAND_TWOPAIRS = "Two pairs";
 const HAND_THREEOFAKIND = "Three of a kind";
@@ -26,8 +26,8 @@ export interface HandValue {
  * @property type   win or draw
  * @property index  winner index(if win)
  * @property name   winning hand
- * @property suit   suit name if won with hicard
- * @property value  card value if won with hicard
+ * @property suit   suit name if won with high card
+ * @property value  card value if won with high card
  */
 export interface Result {
     type: 'win' | 'draw';
@@ -35,12 +35,16 @@ export interface Result {
     name?: string;
     suit?: string;
     value?: number;
-    tieBreakHiCard?: boolean;
+    tieBreak?: number;
 }
 interface TestCache {
-    hicard: {
-        suit: string,
-        value: number
+    high_card: {
+        suit: string;
+        value: number;
+        kicker: {
+            suit: string;
+            value: number;
+        }
     },
     pair: {
         value: number,
@@ -69,9 +73,13 @@ export interface Rank {
 
 export class Holdem {
     private test_cache: TestCache = {
-        hicard: {
+        high_card: {
             suit: '',
-            value: 0
+            value: 0,
+            kicker: {
+                suit: '',
+                value: 0,
+            }
         },
         pair: {
             value: 0,
@@ -102,7 +110,7 @@ export class Holdem {
             suit: {}
         };
     private TestSeries: { name: string, fn: Function }[] = [
-        { name: HAND_HICARD, fn: this.TestHicard },
+        { name: HAND_HIGHCARD, fn: this.TestHighCard },
         { name: HAND_PAIR, fn: this.TestPair },
         { name: HAND_TWOPAIRS, fn: this.TestTwoPairs },
         { name: HAND_THREEOFAKIND, fn: this.TestThreeOfAKind },
@@ -114,10 +122,17 @@ export class Holdem {
         { name: HAND_ROYALFLUSH, fn: this.TestRoyalFlush }
     ];
     //Simple value of the card. Lowest: 2 - Highest: Ace(14)
-    private TestHicard(hand: Array<Card>, mainCards: Array<Card>) {
-        let card = mainCards.slice(0).sort(DESC)[0];
-        this.test_cache.hicard = { suit: card.suit + '', value: card.value };
-        return card.value;
+    private TestHighCard(hand: Array<Card>, mainCards: Array<Card>) {
+        const [high_card, kicker] = mainCards.slice(0).sort(DESC);
+        this.test_cache.high_card = {
+            suit: `${high_card.suit}`,
+            value: high_card.value,
+            kicker: {
+                suit: `${kicker.suit}`,
+                value: kicker.value
+            }
+        };
+        return high_card.value;
     }
     //Two cards with the same value
     private TestPair(hand: Array<Card>, mainCards: Array<Card>) {
@@ -231,7 +246,7 @@ export class Holdem {
     }
     computeHand(allcards: Array<Card>, mainCards: Array<Card>): HandValue {
         this.test_cache = {
-            hicard: { suit: '', value: 0 },
+            high_card: { suit: '', value: 0, kicker: { suit: '', value: 0 } },
             pair: { value: 0, index: -1 },
             two_pairs: {
                 all_indices: [],
@@ -251,8 +266,8 @@ export class Holdem {
             suit: {}
         }
         for (let i = 0; i < allcards.length; i++) {
-            let suit = allcards[i].suit + '';
-            let value = allcards[i].value;
+            const suit = allcards[i].suit + '';
+            const value = allcards[i].value;
             if (!this.test_summary.suit[suit])
                 this.test_summary.suit[suit] = [i];
             else
@@ -270,35 +285,35 @@ export class Holdem {
         };
     }
     compareHands(hands: Array<Array<Card>>, community: Array<Card>): Result {
-        let ranks: Array<Rank> = hands.map((f, index) => {
-            let hand = f.concat(community);
+        const ranks: Array<Rank> = hands.map((f, index) => {
+            const hand = f.concat(community);
             return {
                 ...this.computeHand(hand, f),
                 index,
-                cache: Object.assign([], this.test_cache),
+                cache: Object.assign({}, this.test_cache),
                 hand
             };
         }).sort(DESC);
         if (ranks[0].value > ranks[1].value) {
-            let result: any = { type: "win", index: ranks[0].index, name: ranks[0].name };
-            if (result.name == HAND_HICARD) result.suit = ranks[0].cache.hicard.suit;
+            const result: any = { type: "win", index: ranks[0].index, name: ranks[0].name };
+            if (result.name == HAND_HIGHCARD) result.suit = ranks[0].cache.high_card.suit;
             return result;
         } else {
             //console.log(JSON.stringify(ranks, null, 1));
-            let highest_rank_name = ranks[0].name;
-            let tieBreak = TieBreaker[highest_rank_name](ranks.filter(r => r.name == highest_rank_name));
-            let result = {
+            const { name: highest_rank_name } = ranks[0];
+            const conflict = TieBreaker[highest_rank_name](ranks.filter(r => r.name == highest_rank_name));
+            const result: Result = {
                 //test only the ranks same as highest rank
-                ...tieBreak,
+                ...conflict,
                 //put the highest rank name
-                name: tieBreak.tieBreakHiCard ? HAND_HICARD : highest_rank_name
+                name: highest_rank_name,
             };
             return result;
         }
     }
     /*computeHandAllPartialStat(hand:Array<Card>){
         let stat = {
-            hicard:0,
+            high_card:0,
             pair:0,
             two_pairs:0,
             three_of_a_kind:0,
